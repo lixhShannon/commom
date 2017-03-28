@@ -10,22 +10,15 @@
 版本信息          ：v1.0
 其他说明          ：
 ********************************************************************/
-#include "uart_send.h"
+#include "SL_system.h"
 
-char uart_phase=0;
-char uart_check(char *buf)
-{
-    char crc=0xAA;
-    for(char i=0;i<8;i++)
-    {
-        crc ^= buf[i];
-    }
-    return crc;
-}
+uint8_t uart_phase=0;  //开关量
 
-void sendData(unsigned char CANID)
+void sendData(uint8_t CANID)
 {
-    char buf[10];
+    uint8_t buf[10];
+    uint8_t i;
+    uint8_t crc=0xAA;
     buf[0] = 0xAA;
     if(CANID<7)
     {
@@ -33,9 +26,16 @@ void sendData(unsigned char CANID)
     }
     else
     {
-        _debug();
+        printf("error CAN ID");
         return;
     }
+    crc ^= buf[0];
+    for(i=0;i<8;i++)
+    {
+        buf[i+1] = SendBuf[i];
+        crc ^= buf[i+1];
+    }
+    buf[10] = crc;
 }
 
 bool uart_send(void)
@@ -57,6 +57,8 @@ bool uart_send(void)
         case 3:  //头部板
         sendData(0x08);
         uart_phase = 0;
+        break;
+        case 4:
         break;
         default:
         uart_phase = 0;
